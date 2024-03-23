@@ -1,0 +1,90 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/eumel8/rancher-servicemonitor
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# connect to Rancher server with RANCHER_URL and RANCHER_TOKEN (required)
+# token can be provide by secret or env var
+# set LOG_LEVEL to `debug` for more output
+env:
+  - name: RANCHER_URL
+    value: https://rancher.example.com/v3
+#  - name: RANCHER_TOKEN
+#    valueFrom:
+#      secretKeyRef:
+#        name: ranchertoken
+#        key: RANCHER_TOKEN
+#  - name: LOG_LEVEL
+#    value: info
+#  - name: PORT
+#    value: "8080"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  supplementalGroups:
+  - 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+serviceMonitor:
+  enabled: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 10m
+    memory: 28Mi
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
