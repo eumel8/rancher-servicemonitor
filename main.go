@@ -47,14 +47,32 @@ func (c *Config) CreateClientOpts() *clientbase.ClientOpts {
 		CACerts:  c.CACerts,
 		Insecure: c.Insecure,
 	}
+
+	// load the config from environment variables
+
+	// return c.Load()
 	return options
+}
+
+// load config from environment variables
+func (c *Config) Load() {
+	c.URL = os.Getenv("RANCHER_URL")
+	c.TokenKey = os.Getenv("RANCHER_TOKEN")
+	c.CACerts = os.Getenv("RANCHER_CACERT")
+	c.ClusterID = os.Getenv("RANCHER_CLUSTERID")
+	c.ProjectID = os.Getenv("RANCHER_PROJECTID")
 }
 
 // ManagementClient creates a Rancher client scoped to the management API
 func (c *Config) ManagementClient() (*managementClient.Client, error) {
 
 	// Setup the management client
-	options := c.CreateClientOpts()
+	// options := c.CreateClientOpts()
+
+	c.Load()
+	options := &clientbase.ClientOpts{
+		// Add any necessary fields here
+	}
 	//options.URL = options.URL + rancher2ClientAPIVersion
 	mClient, err := managementClient.NewClient(options)
 	if err != nil {
