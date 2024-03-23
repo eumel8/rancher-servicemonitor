@@ -73,20 +73,24 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 
 	c.Load()
 	options := &clientbase.ClientOpts{
-		// Add any necessary fields here
+		URL:      c.URL,
+		TokenKey: c.TokenKey,
+		CACerts:  c.CACerts,
+		Insecure: c.Insecure,
 	}
+
 	//options.URL = options.URL + rancher2ClientAPIVersion
 	mClient, err := managementClient.NewClient(options)
 	if err != nil {
 		return nil, err
 	}
 	c.Client.Management = mClient
-
 	return c.Client.Management, nil
+
 }
 
 func (c *Config) getData() (int, error) {
-	fmt.Println("Getting project count")
+	fmt.Println("Getting project data")
 	return c.getProjectCount()
 }
 
@@ -132,6 +136,8 @@ func main() {
 
 func (c *Config) getProjectCount() (int, error) {
 	fmt.Println("Getting project count")
+	// Get the project count
+
 	projects, err := c.Client.Management.Project.List(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
