@@ -243,7 +243,7 @@ func main() {
 
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 
-		log.Debug("Request received", r.URL.Path)
+		log.Debug(r.RemoteAddr, r.Proto, r.Method, r.RequestURI, r.Response)
 		dataCount, err := config.getData()
 		if err != nil {
 			log.Error("Failed to get the data count", err)
