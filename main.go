@@ -142,15 +142,13 @@ func (c *Config) getProjectCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	//fmt.Println("My Manager: ", mymanager)
+	fmt.Println("My Manager: ", mymanager)
 
-	myproject, err := mymanager.
-		Project.
-		List(clientbase.NewListOpts())
-	if err != nil {
-		return 0, err
-	}
-	fmt.Fprintln(w, "My Project: ", myproject.Data)
+	//myproject, err := mymanager.Project.List(clientbase.NewListOpts())
+	//if err != nil {
+	//	return 0, err
+	//}
+	//fmt.Println("My Project: ", myproject.Data)
 
 	projects, err := c.Client.Management.Project.List(clientbase.NewListOpts())
 	if err != nil {
