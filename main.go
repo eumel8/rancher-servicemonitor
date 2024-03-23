@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rancher/norman/clientbase"
+
 	//clusterClient "github.com/rancher/rancher/pkg/client/generated/cluster/v3"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
 	//projectClient "github.com/rancher/rancher/pkg/client/generated/project/v3"
@@ -130,8 +131,8 @@ func main() {
 //func (c *Config) getProjectCount(clusterID string) (int, error) {
 
 func (c *Config) getProjectCount() (int, error) {
-
-	projects, err := c.Client.Management.Project.List(nil)
+	fmt.Println("Getting project count")
+	projects, err := c.Client.Management.Project.List(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
