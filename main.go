@@ -84,6 +84,7 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 }
 
 func (c *Config) getData() (int, error) {
+	fmt.Println("Getting project count")
 	return c.getProjectCount()
 }
 
@@ -133,7 +134,7 @@ func (c *Config) getProjectCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-
+	fmt.Println("Projects: ", projects)
 	projectCount := len(projects.Data)
 	return projectCount, nil
 }
