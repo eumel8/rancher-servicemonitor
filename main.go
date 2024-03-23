@@ -95,6 +95,8 @@ func (c *Config) getData() (int, error) {
 }
 
 func main() {
+
+	fmt.Println("Starting Rancher Prometheus Exporter")
 	// Create a new HTTP server
 	server := &http.Server{
 		Addr: ":8080",
@@ -137,21 +139,6 @@ func main() {
 func (c *Config) getProjectCount() (int, error) {
 	fmt.Println("Getting project count")
 	// Get the project count
-
-	mymanager, err := c.ManagementClient()
-
-	if err != nil {
-		return 0, err
-	}
-	fmt.Println("My Manager: ", mymanager)
-
-	myproject, err := mymanager.
-		Project.
-		List(clientbase.NewListOpts())
-	if err != nil {
-		return 0, err
-	}
-	fmt.Println("My Project: ", myproject)
 
 	projects, err := c.Client.Management.Project.List(clientbase.NewListOpts())
 	if err != nil {
