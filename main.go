@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -123,7 +124,7 @@ func main() {
 	<-stop
 
 	// Shutdown the server gracefully
-	server.Shutdown(nil)
+	server.Shutdown(context.TODO())
 }
 
 //func (c *Config) getProjectCount(clusterID string) (int, error) {
