@@ -112,10 +112,9 @@ func main() {
 			http.Error(w, "Failed to get the number of Pods", http.StatusInternalServerError)
 			return
 		}
-
-		// Write the number of Pods to the response in Prometheus format
-		fmt.Fprintf(w, "pod_count %d\n", projectCount)
-
+		fmt.Fprintf(w, "HELP rancher_project_count Current count of project resource in Rancher")
+		fmt.Fprintf(w, "rancher_project_count gauge")
+		fmt.Fprintf(w, "rancher_project_count %d\n", projectCount)
 	})
 
 	// Start the server in a separate goroutine
@@ -139,6 +138,19 @@ func main() {
 func (c *Config) getProjectCount() (int, error) {
 	fmt.Println("Getting project count")
 	// Get the project count
+	mymanager, err := c.ManagementClient()
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println("My Manager: ", mymanager)
+
+	myproject, err := mymanager.
+		Project.
+		List(clientbase.NewListOpts())
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println("My Project: ", myproject)
 
 	projects, err := c.Client.Management.Project.List(clientbase.NewListOpts())
 	if err != nil {
