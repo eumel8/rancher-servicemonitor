@@ -10,8 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	log "github.com/gookit/slog"
+
 	"github.com/rancher/norman/clientbase"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
+)
+
+const (
+	port        = "8080"
+	logTemplate = "[{{datetime}}] [{{level}}] {{caller}} {{message}} \n"
 )
 
 // Client are the client kind for a Rancher v3 API
@@ -42,6 +49,8 @@ type Config struct {
 	K8SSupportedVersions []string
 	Sync                 sync.Mutex
 	Client               Client
+	Loglevel             string
+	Port                 string
 }
 
 func (c *Config) CreateClientOpts() *clientbase.ClientOpts {
@@ -56,11 +65,13 @@ func (c *Config) CreateClientOpts() *clientbase.ClientOpts {
 
 // load config from environment variables
 func (c *Config) Load() {
-	c.URL = os.Getenv("RANCHER_URL")
-	c.TokenKey = os.Getenv("RANCHER_TOKEN")
 	c.CACerts = os.Getenv("RANCHER_CACERT")
 	c.ClusterID = os.Getenv("RANCHER_CLUSTERID")
+	c.Loglevel = os.Getenv("LOG_LEVEL")
+	c.Port = os.Getenv("PORT")
 	c.ProjectID = os.Getenv("RANCHER_PROJECTID")
+	c.TokenKey = os.Getenv("RANCHER_TOKEN")
+	c.URL = os.Getenv("RANCHER_URL")
 }
 
 // ManagementClient creates a Rancher client scoped to the management API
@@ -73,7 +84,6 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 		CACerts:  c.CACerts,
 		Insecure: c.Insecure,
 	}
-
 	mClient, err := managementClient.NewClient(options)
 	if err != nil {
 		return nil, err
@@ -84,7 +94,7 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 
 // getData gets the data from the Rancher API for the Counter struct
 func (c *Config) getData() (Counter, error) {
-	fmt.Println("Getting data ...")
+	log.Debug("Getting data")
 
 	clusters, err := c.getClusterCount()
 	if err != nil {
@@ -123,7 +133,7 @@ func (c *Config) getData() (Counter, error) {
 
 // getClusterCount gets the count of clusters in Rancher
 func (c *Config) getClusterCount() (int, error) {
-	fmt.Println("Getting cluster count")
+	log.Debug("Getting cluster count")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return 0, err
@@ -138,7 +148,7 @@ func (c *Config) getClusterCount() (int, error) {
 
 // getProjectCount gets the count of projects in Rancher
 func (c *Config) getProjectCount() (int, error) {
-	fmt.Println("Getting project count")
+	log.Debug("Getting project count")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return 0, err
@@ -153,7 +163,7 @@ func (c *Config) getProjectCount() (int, error) {
 
 // getNodeCount gets the count of nodes in Rancher
 func (c *Config) getNodeCount() (int, error) {
-	fmt.Println("Getting node count")
+	log.Debug("Getting node count")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return 0, err
@@ -168,7 +178,7 @@ func (c *Config) getNodeCount() (int, error) {
 
 // getTokenCount gets the count of tokens in Rancher
 func (c *Config) getTokenCount() (int, error) {
-	fmt.Println("Getting token count")
+	log.Debug("Getting token count")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return 0, err
@@ -183,7 +193,7 @@ func (c *Config) getTokenCount() (int, error) {
 
 // get the count of users in Rancher
 func (c *Config) getUserCount() (int, error) {
-	fmt.Println("Getting user count")
+	log.Debug("Getting user count")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return 0, err
@@ -197,16 +207,46 @@ func (c *Config) getUserCount() (int, error) {
 }
 
 func main() {
-	fmt.Println("Starting Rancher Prometheus Exporter")
+	config := &Config{}
+	config.Load()
+
+	logLevel := &config.Loglevel
+	switch *logLevel {
+	case "fatal":
+		log.SetLogLevel(log.FatalLevel)
+	case "trace":
+		log.SetLogLevel(log.TraceLevel)
+	case "debug":
+		log.SetLogLevel(log.DebugLevel)
+	case "error":
+		log.SetLogLevel(log.ErrorLevel)
+	case "warn":
+		log.SetLogLevel(log.WarnLevel)
+	case "info":
+		log.SetLogLevel(log.InfoLevel)
+	default:
+		log.SetLogLevel(log.InfoLevel)
+	}
+
+	log.GetFormatter().(*log.TextFormatter).SetTemplate(logTemplate)
+
+	log.Info("Starting Rancher Prometheus Exporter")
+
 	// Create a new HTTP server
+	port := config.Port
+	if port == "" {
+		port = "8080"
+	}
 	server := &http.Server{
-		Addr: ":8080",
+		Addr: ":" + port,
 	}
 
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		config := &Config{}
+
+		log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
 		dataCount, err := config.getData()
 		if err != nil {
+			log.Error("Failed to get the data count", err)
 			http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
 			return
 		}
@@ -231,7 +271,7 @@ func main() {
 	// Start the server in a separate goroutine
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			fmt.Println(err)
+			log.Error("Failed to start the server", err)
 		}
 	}()
 
