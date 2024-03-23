@@ -112,8 +112,8 @@ func main() {
 			http.Error(w, "Failed to get the number of Pods", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintf(w, "HELP rancher_project_count Current count of project resource in Rancher")
-		fmt.Fprintf(w, "rancher_project_count gauge")
+		fmt.Fprintf(w, "HELP rancher_project_count Current count of project resource in Rancher\n")
+		fmt.Fprintf(w, "rancher_project_count gauge\n")
 		fmt.Fprintf(w, "rancher_project_count %d\n", projectCount)
 	})
 
@@ -142,7 +142,7 @@ func (c *Config) getProjectCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("My Manager: ", mymanager)
+	//fmt.Println("My Manager: ", mymanager)
 
 	myproject, err := mymanager.
 		Project.
