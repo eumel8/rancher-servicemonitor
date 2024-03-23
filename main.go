@@ -11,18 +11,12 @@ import (
 	"time"
 
 	"github.com/rancher/norman/clientbase"
-
-	//clusterClient "github.com/rancher/rancher/pkg/client/generated/cluster/v3"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
-	//projectClient "github.com/rancher/rancher/pkg/client/generated/project/v3"
 )
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
 	Management *managementClient.Client
-	//CatalogV2  map[string]*clientbase.APIBaseClient
-	//Cluster    map[string]*clusterClient.Client
-	//Project    map[string]*projectClient.Client
 }
 
 type Counter struct {
@@ -88,6 +82,7 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 	return c.Client.Management, nil
 }
 
+// getData gets the data from the Rancher API for the Counter struct
 func (c *Config) getData() (Counter, error) {
 	fmt.Println("Getting data ...")
 
@@ -126,6 +121,7 @@ func (c *Config) getData() (Counter, error) {
 	return Counter, nil
 }
 
+// getClusterCount gets the count of clusters in Rancher
 func (c *Config) getClusterCount() (int, error) {
 	fmt.Println("Getting cluster count")
 	managementClient, err := c.ManagementClient()
@@ -140,6 +136,7 @@ func (c *Config) getClusterCount() (int, error) {
 	return clusterCount, nil
 }
 
+// getProjectCount gets the count of projects in Rancher
 func (c *Config) getProjectCount() (int, error) {
 	fmt.Println("Getting project count")
 	managementClient, err := c.ManagementClient()
@@ -154,6 +151,7 @@ func (c *Config) getProjectCount() (int, error) {
 	return projectCount, nil
 }
 
+// getNodeCount gets the count of nodes in Rancher
 func (c *Config) getNodeCount() (int, error) {
 	fmt.Println("Getting node count")
 	managementClient, err := c.ManagementClient()
@@ -168,6 +166,7 @@ func (c *Config) getNodeCount() (int, error) {
 	return nodeCount, nil
 }
 
+// getTokenCount gets the count of tokens in Rancher
 func (c *Config) getTokenCount() (int, error) {
 	fmt.Println("Getting token count")
 	managementClient, err := c.ManagementClient()
@@ -182,6 +181,7 @@ func (c *Config) getTokenCount() (int, error) {
 	return tokenCount, nil
 }
 
+// get the count of users in Rancher
 func (c *Config) getUserCount() (int, error) {
 	fmt.Println("Getting user count")
 	managementClient, err := c.ManagementClient()
@@ -243,5 +243,3 @@ func main() {
 	// Shutdown the server gracefully
 	server.Shutdown(context.TODO())
 }
-
-//func (c *Config) getProjectCount(clusterID string) (int, error) {
