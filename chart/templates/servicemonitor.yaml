@@ -8,7 +8,7 @@ metadata:
     {{- include "rancher-servicemonitor.labels" . | nindent 4 }}
 spec:
   endpoints:
-    - port: metrics
+    - port: http
       interval: 60s
       path: /metrics
   selector:
