@@ -241,6 +241,13 @@ func main() {
 		Addr: ":" + port,
 	}
 
+	// Define the routes
+	// Default route for probes
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Rancher Prometheus Exporter")
+	})
+
+	// Metrics route
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
