@@ -198,7 +198,7 @@ func (c *Config) getUserCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	users, err := managementClient.User.List(clientbase.NewListOpts())
+	users, err := managementClient.User.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
