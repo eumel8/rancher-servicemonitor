@@ -17,8 +17,8 @@ jobs:
 
       - uses: ko-build/setup-ko@v0.6
       - run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           ko build --bare
           ko build --bare -t $VERSION
         env:
           KO_DEFAULTPLATFORMS: linux/arm64,linux/amd64
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
