@@ -138,7 +138,7 @@ func (c *Config) getClusterCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	clusters, err := managementClient.Cluster.List(clientbase.NewListOpts())
+	clusters, err := managementClient.Cluster.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
@@ -153,7 +153,7 @@ func (c *Config) getProjectCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	projects, err := managementClient.Project.List(clientbase.NewListOpts())
+	projects, err := managementClient.Project.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
@@ -168,7 +168,7 @@ func (c *Config) getNodeCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	nodes, err := managementClient.Node.List(clientbase.NewListOpts())
+	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
@@ -183,7 +183,7 @@ func (c *Config) getTokenCount() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	tokens, err := managementClient.Token.List(clientbase.NewListOpts())
+	tokens, err := managementClient.Token.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return 0, err
 	}
