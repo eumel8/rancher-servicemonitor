@@ -32,6 +32,7 @@ type Counter struct {
 	Projects int
 	Token    int
 	Users    int
+	Cpus     int
 }
 
 // Config is the configuration parameters for a Rancher v3 API
@@ -128,6 +129,12 @@ func (c *Config) getData() (Counter, error) {
 	}
 	Counter.Users = users
 
+	cpus, err := c.getNodeCPU()
+	if err != nil {
+		return Counter, err
+	}
+	Counter.Cpus = cpus
+
 	return Counter, nil
 }
 
@@ -174,6 +181,28 @@ func (c *Config) getNodeCount() (int, error) {
 	}
 	nodeCount := len(nodes.Data)
 	return nodeCount, nil
+}
+
+// getNodeCPUCount gets the count of cpu in Rancher
+func (c *Config) getNodeCPU() (int, error) {
+	log.Debug("Getting node cpu")
+	managementClient, err := c.ManagementClient()
+	if err != nil {
+		return 0, err
+	}
+	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
+	if err != nil {
+		return 0, err
+	}
+	// node cpu summary
+	for _, node := range nodes.Data {
+		fmt.Println(node.Info.CPU.Count)
+	}
+	//nodeCount := nodes.Data[0].Status.NodeInfo.CPUInfo.NumCores
+
+	//nodeCount := len(nodes.Data)
+	return 0, nil
+	//return nodeCount, nil
 }
 
 // getTokenCount gets the count of tokens in Rancher
