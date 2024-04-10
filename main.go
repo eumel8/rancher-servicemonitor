@@ -196,6 +196,7 @@ func (c *Config) getNodeCPU() (int, error) {
 	}
 	// node cpu summary
 	for _, node := range nodes.Data {
+		fmt.Println(node.NamespaceId)
 		fmt.Println(node.Info.CPU.Count)
 	}
 	//nodeCount := nodes.Data[0].Status.NodeInfo.CPUInfo.NumCores
