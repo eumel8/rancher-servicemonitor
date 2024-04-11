@@ -17,8 +17,6 @@ import (
 
 	"github.com/rancher/norman/clientbase"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -215,6 +213,7 @@ func (c *Config) getNodeCPU() (struct {
 	Clusters string
 	CpuCount int64
 }, error) {
+
 	var Cpu struct {
 		Clusters string
 		CpuCount int64
@@ -230,34 +229,17 @@ func (c *Config) getNodeCPU() (struct {
 		return Cpu, err
 	}
 
-	//Cpu := struct {
-	//	Clusters string
-	//	CpuCount int
-	//}
-	//Cpu      struct {
-	//	Clusters string
-	//	CpuCount int
-	//}
 	// node cpu summary
 	for _, node := range nodes.Data {
 
-		rancherClusterCpuCount.WithLabelValues(
-			node.ClusterID,
-			fmt.Sprintf("%d", node.Info.CPU.Count))
-		//node.Info.CPU.Count,
-		//node.ClusterID, node.CPU.Count)
+		rancherClusterCpuCount.
+			WithLabelValues(node.ClusterID, fmt.Sprintf("%d", node.Info.CPU.Count)).
+			Set(float64(node.Info.CPU.Count))
+
 		Cpu.Clusters = node.ClusterID
 		Cpu.CpuCount = node.Info.CPU.Count
-		//Cpu = append(Cpu, node.ClusterID, node.Info.CPU.Count)
-		//fmt.Println(node.ClusterID)
-		//fmt.Println(node.Info.CPU.Count)
 	}
-	//nodeCount := nodes.Data[0].Status.NodeInfo.CPUInfo.NumCores
-
-	//nodeCount := len(nodes.Data)
-	spew.Dump(Cpu)
 	return Cpu, nil
-	//return nodeCount, nil
 }
 
 // getTokenCount gets the count of tokens in Rancher
