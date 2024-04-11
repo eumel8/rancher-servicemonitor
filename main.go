@@ -352,7 +352,7 @@ func main() {
 		fmt.Fprintf(w, "rancher_cluster_count %d\n", dataCount.Clusters)
 		fmt.Fprintf(w, "# HELP rancher_cluster_cpu_count Current count of cluster Cpu resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_cluster_cpu_count gauge\n")
-		fmt.Fprintf(w, "rancher_cluster_cpu_count %d\n", dataCount.Cpu)
+		fmt.Fprintf(w, "rancher_cluster_cpu_count %v\n", dataCount.Cpu)
 		fmt.Fprintf(w, "# HELP rancher_project_count Current count of project resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_project_count gauge\n")
 		fmt.Fprintf(w, "rancher_project_count %d\n", dataCount.Projects)
