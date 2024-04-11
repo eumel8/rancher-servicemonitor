@@ -31,10 +31,10 @@ var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Help: "Rancher Cluster CPU count",
 }, []string{"cluster", "type"})
 
-type providerLabelCpu struct {
-	Cluster  string
-	CpuCount int64
-}
+var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "rancher_cluster_memory_count",
+	Help: "Rancher Cluster Memory count",
+}, []string{"cluster", "type"})
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
@@ -47,14 +47,6 @@ type Counter struct {
 	Projects int
 	Token    int
 	Users    int
-	Cpu      struct {
-		Clusters string
-		CpuCount int64
-	}
-	Memory struct {
-		Clusters    string
-		MemoryCount int
-	}
 }
 
 // Config is the configuration parameters for a Rancher v3 API
@@ -151,15 +143,10 @@ func (c *Config) getData() (Counter, error) {
 	}
 	Counter.Users = users
 
-	cpus, err := c.getNodeCPU()
+	err = c.getNodeMetrics()
 	if err != nil {
 		return Counter, err
 	}
-
-	Counter.Cpu = cpus
-
-	// Counter.Cpu = append(Counter.Cpu, cpus)
-
 	return Counter, nil
 }
 
@@ -209,28 +196,19 @@ func (c *Config) getNodeCount() (int, error) {
 }
 
 // getNodeCPUCount gets the count of cpu in Rancher
-func (c *Config) getNodeCPU() (struct {
-	Clusters string
-	CpuCount int64
-}, error) {
-
-	var Cpu struct {
-		Clusters string
-		CpuCount int64
-	}
+func (c *Config) getNodeMetrics() error {
 
 	log.Debug("Getting node cpu")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
-		return Cpu, err
+		return err
 	}
 	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
-		return Cpu, err
+		return err
 	}
 
 	var nodeType string
-	// node cpu summary
 	for _, node := range nodes.Data {
 
 		if node.Worker {
@@ -243,10 +221,12 @@ func (c *Config) getNodeCPU() (struct {
 			WithLabelValues(node.ClusterID, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
-		Cpu.Clusters = node.ClusterID
-		Cpu.CpuCount = node.Info.CPU.Count
+		rancherClusterMemoryCount.
+			WithLabelValues(node.ClusterID, nodeType).
+			Set(float64(node.Info.Memory.MemTotalKiB))
+
 	}
-	return Cpu, nil
+	return nil
 }
 
 // getTokenCount gets the count of tokens in Rancher
@@ -305,7 +285,7 @@ func main() {
 
 	log.Info("Starting Rancher Prometheus Exporter")
 
-	registry.MustRegister(rancherClusterCpuCount)
+	registry.MustRegister(rancherClusterCpuCount, rancherClusterMemoryCount)
 
 	// Create a new HTTP server
 	port := config.Port
@@ -339,9 +319,6 @@ func main() {
 		fmt.Fprintf(w, "# HELP rancher_cluster_count Current count of cluster resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_cluster_count gauge\n")
 		fmt.Fprintf(w, "rancher_cluster_count %d\n", dataCount.Clusters)
-		fmt.Fprintf(w, "# HELP rancher_cluster_cpu_count Current count of cluster Cpu resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_cluster_cpu_count gauge\n")
-		fmt.Fprintf(w, "rancher_cluster_cpu_count %v\n", dataCount.Cpu)
 		fmt.Fprintf(w, "# HELP rancher_project_count Current count of project resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_project_count gauge\n")
 		fmt.Fprintf(w, "rancher_project_count %d\n", dataCount.Projects)
