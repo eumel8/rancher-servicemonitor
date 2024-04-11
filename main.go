@@ -29,7 +29,7 @@ var registry = prometheus.NewRegistry()
 var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_cpu_count",
 	Help: "Rancher Cluster CPU count",
-}, []string{"cluster", "cpu_count"})
+}, []string{"cluster", "type"})
 
 type providerLabelCpu struct {
 	Cluster  string
@@ -229,11 +229,18 @@ func (c *Config) getNodeCPU() (struct {
 		return Cpu, err
 	}
 
+	var nodeType string
 	// node cpu summary
 	for _, node := range nodes.Data {
 
+		if node.Worker {
+			nodeType = "worker"
+		} else {
+			nodeType = "master"
+		}
+
 		rancherClusterCpuCount.
-			WithLabelValues(node.ClusterID, fmt.Sprintf("%d", node.Info.CPU.Count)).
+			WithLabelValues(node.ClusterID, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
 		Cpu.Clusters = node.ClusterID
@@ -276,8 +283,6 @@ func main() {
 	config := &Config{}
 	config.Load()
 
-	registry.MustRegister(rancherClusterCpuCount)
-
 	logLevel := &config.Loglevel
 	switch *logLevel {
 	case "fatal":
@@ -299,6 +304,8 @@ func main() {
 	log.GetFormatter().(*log.TextFormatter).SetTemplate(logTemplate)
 
 	log.Info("Starting Rancher Prometheus Exporter")
+
+	registry.MustRegister(rancherClusterCpuCount)
 
 	// Create a new HTTP server
 	port := config.Port
