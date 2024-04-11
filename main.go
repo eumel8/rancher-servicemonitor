@@ -14,6 +14,8 @@ import (
 
 	"github.com/rancher/norman/clientbase"
 	managementClient "github.com/rancher/rancher/pkg/client/generated/management/v3"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -233,6 +235,7 @@ func (c *Config) getNodeCPU() (struct {
 	//nodeCount := nodes.Data[0].Status.NodeInfo.CPUInfo.NumCores
 
 	//nodeCount := len(nodes.Data)
+	spew.Dump(Cpu)
 	return Cpu, nil
 	//return nodeCount, nil
 }

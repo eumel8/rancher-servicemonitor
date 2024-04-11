@@ -3,6 +3,7 @@ module main.go
 go 1.22.1
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/gookit/slog v0.5.5
 	github.com/rancher/norman v0.0.0-20240322210258-a735b7e48868
 	github.com/rancher/rancher/pkg/client v0.0.0-20240322172249-c4f3cfef0d14
