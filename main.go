@@ -32,7 +32,14 @@ type Counter struct {
 	Projects int
 	Token    int
 	Users    int
-	Cpus     int
+	Cpu      struct {
+		Clusters string
+		CpuCount int64
+	}
+	Memory struct {
+		Clusters    string
+		MemoryCount int
+	}
 }
 
 // Config is the configuration parameters for a Rancher v3 API
@@ -133,7 +140,10 @@ func (c *Config) getData() (Counter, error) {
 	if err != nil {
 		return Counter, err
 	}
-	Counter.Cpus = cpus
+
+	Counter.Cpu = cpus
+
+	// Counter.Cpu = append(Counter.Cpu, cpus)
 
 	return Counter, nil
 }
@@ -184,25 +194,46 @@ func (c *Config) getNodeCount() (int, error) {
 }
 
 // getNodeCPUCount gets the count of cpu in Rancher
-func (c *Config) getNodeCPU() (int, error) {
+func (c *Config) getNodeCPU() (struct {
+	Clusters string
+	CpuCount int64
+}, error) {
+	var Cpu struct {
+		Clusters string
+		CpuCount int64
+	}
+
 	log.Debug("Getting node cpu")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
-		return 0, err
+		return Cpu, err
 	}
 	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
-		return 0, err
+		return Cpu, err
 	}
+
+	//Cpu := struct {
+	//	Clusters string
+	//	CpuCount int
+	//}
+	//Cpu      struct {
+	//	Clusters string
+	//	CpuCount int
+	//}
 	// node cpu summary
 	for _, node := range nodes.Data {
-		fmt.Println(node.ClusterID)
+
+		Cpu.Clusters = node.ClusterID
+		Cpu.CpuCount = node.Info.CPU.Count
+		//Cpu = append(Cpu, node.ClusterID, node.Info.CPU.Count)
+		//fmt.Println(node.ClusterID)
 		//fmt.Println(node.Info.CPU.Count)
 	}
 	//nodeCount := nodes.Data[0].Status.NodeInfo.CPUInfo.NumCores
 
 	//nodeCount := len(nodes.Data)
-	return 0, nil
+	return Cpu, nil
 	//return nodeCount, nil
 }
 
@@ -291,6 +322,9 @@ func main() {
 		fmt.Fprintf(w, "# HELP rancher_cluster_count Current count of cluster resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_cluster_count gauge\n")
 		fmt.Fprintf(w, "rancher_cluster_count %d\n", dataCount.Clusters)
+		fmt.Fprintf(w, "# HELP rancher_cluster_cpu_count Current count of cluster Cpu resource in Rancher\n")
+		fmt.Fprintf(w, "# rancher_cluster_cpu_count gauge\n")
+		fmt.Fprintf(w, "rancher_cluster_cpu_count %d\n", dataCount.Cpu)
 		fmt.Fprintf(w, "# HELP rancher_project_count Current count of project resource in Rancher\n")
 		fmt.Fprintf(w, "# rancher_project_count gauge\n")
 		fmt.Fprintf(w, "rancher_project_count %d\n", dataCount.Projects)
