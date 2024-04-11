@@ -10,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	log "github.com/gookit/slog"
 
 	"github.com/rancher/norman/clientbase"
@@ -22,6 +25,18 @@ const (
 	port        = "8080"
 	logTemplate = "[{{datetime}}] [{{level}}] {{caller}} {{message}} \n"
 )
+
+var registry = prometheus.NewRegistry()
+
+var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "rancher_cluster_cpu_count",
+	Help: "Rancher Cluster CPU count",
+}, []string{"cluster", "cpu_count"})
+
+type providerLabelCpu struct {
+	Cluster  string
+	CpuCount int64
+}
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
@@ -226,6 +241,11 @@ func (c *Config) getNodeCPU() (struct {
 	// node cpu summary
 	for _, node := range nodes.Data {
 
+		rancherClusterCpuCount.WithLabelValues(
+			node.ClusterID,
+			fmt.Sprintf("%d", node.Info.CPU.Count))
+		//node.Info.CPU.Count,
+		//node.ClusterID, node.CPU.Count)
 		Cpu.Clusters = node.ClusterID
 		Cpu.CpuCount = node.Info.CPU.Count
 		//Cpu = append(Cpu, node.ClusterID, node.Info.CPU.Count)
@@ -310,6 +330,9 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Rancher Prometheus Exporter")
 	})
+
+	http.Handle("/metrics2", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	// Default route for probes
 
 	// Metrics route
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
