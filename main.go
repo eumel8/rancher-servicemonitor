@@ -294,6 +294,8 @@ func main() {
 	config := &Config{}
 	config.Load()
 
+	registry.MustRegister(rancherClusterCpuCount)
+
 	logLevel := &config.Loglevel
 	switch *logLevel {
 	case "fatal":
