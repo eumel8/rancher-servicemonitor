@@ -26,6 +26,31 @@ const (
 
 var registry = prometheus.NewRegistry()
 
+var rancherClusterCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "rancher_cluster_count",
+	Help: "Rancher Cluster count",
+})
+
+var rancherNodeCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "rancher_node_count",
+	Help: "Rancher Node count",
+})
+
+var rancherProjectCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "rancher_project_count",
+	Help: "Rancher Project count",
+})
+
+var rancherTokenCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "rancher_token_count",
+	Help: "Rancher Token count",
+})
+
+var rancherUserCount = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "rancher_user_count",
+	Help: "Rancher User count",
+})
+
 var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_cpu_count",
 	Help: "Rancher Cluster CPU count",
@@ -39,14 +64,6 @@ var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 // Client are the client kind for a Rancher v3 API
 type Client struct {
 	Management *managementClient.Client
-}
-
-type Counter struct {
-	Clusters int
-	Nodes    int
-	Projects int
-	Token    int
-	Users    int
 }
 
 // Config is the configuration parameters for a Rancher v3 API
@@ -68,6 +85,7 @@ type Config struct {
 	Port                 string
 }
 
+// Options for the client
 func (c *Config) CreateClientOpts() *clientbase.ClientOpts {
 	options := &clientbase.ClientOpts{
 		URL:      c.URL,
@@ -108,109 +126,105 @@ func (c *Config) ManagementClient() (*managementClient.Client, error) {
 }
 
 // getData gets the data from the Rancher API for the Counter struct
-func (c *Config) getData() (Counter, error) {
+func (c *Config) getData() error {
 	log.Debug("Getting data")
 
-	clusters, err := c.getClusterCount()
-	if err != nil {
-		return Counter{}, err
-	}
-	Counter := Counter{
-		Clusters: clusters,
-	}
-
-	projects, err := c.getProjectCount()
-	if err != nil {
-		return Counter, err
-	}
-	Counter.Projects = projects
-
-	nodes, err := c.getNodeCount()
-	if err != nil {
-		return Counter, err
-	}
-	Counter.Nodes = nodes
-
-	tokens, err := c.getTokenCount()
-	if err != nil {
-		return Counter, err
-	}
-	Counter.Token = tokens
-
-	users, err := c.getUserCount()
-	if err != nil {
-		return Counter, err
-	}
-	Counter.Users = users
-
-	err = c.getNodeMetrics()
-	if err != nil {
-		return Counter, err
-	}
-	return Counter, nil
-}
-
-// getClusterCount gets the count of clusters in Rancher
-func (c *Config) getClusterCount() (int, error) {
-	log.Debug("Getting cluster count")
-	managementClient, err := c.ManagementClient()
-	if err != nil {
-		return 0, err
-	}
-	clusters, err := managementClient.Cluster.ListAll(clientbase.NewListOpts())
-	if err != nil {
-		return 0, err
-	}
-	clusterCount := len(clusters.Data)
-	return clusterCount, nil
-}
-
-// getProjectCount gets the count of projects in Rancher
-func (c *Config) getProjectCount() (int, error) {
-	log.Debug("Getting project count")
-	managementClient, err := c.ManagementClient()
-	if err != nil {
-		return 0, err
-	}
-	projects, err := managementClient.Project.ListAll(clientbase.NewListOpts())
-	if err != nil {
-		return 0, err
-	}
-	projectCount := len(projects.Data)
-	return projectCount, nil
-}
-
-// getNodeCount gets the count of nodes in Rancher
-func (c *Config) getNodeCount() (int, error) {
-	log.Debug("Getting node count")
-	managementClient, err := c.ManagementClient()
-	if err != nil {
-		return 0, err
-	}
-	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
-	if err != nil {
-		return 0, err
-	}
-	nodeCount := len(nodes.Data)
-	return nodeCount, nil
-}
-
-// getNodeCPUCount gets the count of cpu in Rancher
-func (c *Config) getNodeMetrics() error {
-
-	log.Debug("Getting node cpu")
 	managementClient, err := c.ManagementClient()
 	if err != nil {
 		return err
 	}
+
+	err = c.getClusterCount(managementClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.getProjectCount(managementClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.getNodeCount(managementClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.getTokenCount(managementClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.getUserCount(managementClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.getNodeMetrics(managementClient)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getClusterCount gets the count of clusters in Rancher
+func (c *Config) getClusterCount(managementClient *managementClient.Client) error {
+	log.Debug("Getting cluster count")
+
+	clusters, err := managementClient.Cluster.ListAll(clientbase.NewListOpts())
+	if err != nil {
+		return err
+	}
+	clusterCount := len(clusters.Data)
+	rancherClusterCount.Add(
+		float64(clusterCount),
+	)
+	return nil
+}
+
+// getProjectCount gets the count of projects in Rancher
+func (c *Config) getProjectCount(managementClient *managementClient.Client) error {
+	log.Debug("Getting project count")
+
+	projects, err := managementClient.Project.ListAll(clientbase.NewListOpts())
+	if err != nil {
+		return err
+	}
+	projectCount := len(projects.Data)
+	rancherProjectCount.Add(
+		float64(projectCount),
+	)
+	return nil
+}
+
+// getNodeCount gets the count of nodes in Rancher
+func (c *Config) getNodeCount(managementClient *managementClient.Client) error {
+	log.Debug("Getting node count")
+
+	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
+	if err != nil {
+		return err
+	}
+	nodeCount := len(nodes.Data)
+	rancherNodeCount.Add(
+		float64(nodeCount),
+	)
+	return nil
+}
+
+// getNodeCPUCount gets the count of cpu in Rancher
+func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error {
+	log.Debug("Getting node cpu")
+
 	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
 		return err
 	}
 
 	var nodeType string
-	for _, node := range nodes.Data {
 
+	// loop around all nodes data
+	for _, node := range nodes.Data {
 		if node.Worker {
 			nodeType = "worker"
 		} else {
@@ -230,33 +244,33 @@ func (c *Config) getNodeMetrics() error {
 }
 
 // getTokenCount gets the count of tokens in Rancher
-func (c *Config) getTokenCount() (int, error) {
+func (c *Config) getTokenCount(managementClient *managementClient.Client) error {
 	log.Debug("Getting token count")
-	managementClient, err := c.ManagementClient()
-	if err != nil {
-		return 0, err
-	}
+
 	tokens, err := managementClient.Token.ListAll(clientbase.NewListOpts())
 	if err != nil {
-		return 0, err
+		return err
 	}
 	tokenCount := len(tokens.Data)
-	return tokenCount, nil
+	rancherTokenCount.Add(
+		float64(tokenCount),
+	)
+	return nil
 }
 
 // get the count of users in Rancher
-func (c *Config) getUserCount() (int, error) {
+func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 	log.Debug("Getting user count")
-	managementClient, err := c.ManagementClient()
-	if err != nil {
-		return 0, err
-	}
+
 	users, err := managementClient.User.ListAll(clientbase.NewListOpts())
 	if err != nil {
-		return 0, err
+		return err
 	}
 	userCount := len(users.Data)
-	return userCount, nil
+	rancherUserCount.Add(
+		float64(userCount),
+	)
+	return nil
 }
 
 func main() {
@@ -285,7 +299,8 @@ func main() {
 
 	log.Info("Starting Rancher Prometheus Exporter")
 
-	registry.MustRegister(rancherClusterCpuCount, rancherClusterMemoryCount)
+	// Create a new Prometheus registry
+	registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 
 	// Create a new HTTP server
 	port := config.Port
@@ -296,42 +311,25 @@ func main() {
 		Addr: ":" + port,
 	}
 
+	// call data
+	err := config.getData()
+	if err != nil {
+		log.Error("Failed to get the data count", err)
+		//http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
+		return
+	}
+
 	// Define the routes
 	// Default route for probes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Rancher Prometheus Exporter")
 	})
 
-	http.Handle("/metrics2", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	// Default route for probes
-
 	// Metrics route
-	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	//log.Debug("Received request:", http.
 
-		log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
-		dataCount, err := config.getData()
-		if err != nil {
-			log.Error("Failed to get the data count", err)
-			http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
-			return
-		}
-		// Write the metrics to the response
-		fmt.Fprintf(w, "# HELP rancher_cluster_count Current count of cluster resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_cluster_count gauge\n")
-		fmt.Fprintf(w, "rancher_cluster_count %d\n", dataCount.Clusters)
-		fmt.Fprintf(w, "# HELP rancher_project_count Current count of project resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_project_count gauge\n")
-		fmt.Fprintf(w, "rancher_project_count %d\n", dataCount.Projects)
-		fmt.Fprintf(w, "# HELP rancher_node_count Current count of node resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_node_count gauge\n")
-		fmt.Fprintf(w, "rancher_node_count %d\n", dataCount.Nodes)
-		fmt.Fprintf(w, "# HELP rancher_token_count Current count of token resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_token_count gauge\n")
-		fmt.Fprintf(w, "rancher_token_count %d\n", dataCount.Token)
-		fmt.Fprintf(w, "# HELP rancher_user_count Current count of user resource in Rancher\n")
-		fmt.Fprintf(w, "# rancher_user_count gauge\n")
-		fmt.Fprintf(w, "rancher_user_count %d\n", dataCount.Users)
-	})
+	//log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
 
 	// Start the server in a separate goroutine
 	go func() {
