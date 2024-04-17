@@ -309,7 +309,7 @@ func main() {
 	log.Info("Starting Rancher Prometheus Exporter")
 
 	// Create a new Prometheus registry
-	registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
+	//registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 
 	// Create a new HTTP server
 	port := config.Port
