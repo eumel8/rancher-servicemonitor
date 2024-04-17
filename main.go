@@ -232,11 +232,11 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 		}
 
 		rancherClusterCpuCount.
-			WithLabelValues(node.ClusterID, nodeType).
+			WithLabelValues(node.ClusterID, node.Name, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
 		rancherClusterMemoryCount.
-			WithLabelValues(node.ClusterID, nodeType).
+			WithLabelValues(node.ClusterID, node.Name, nodeType).
 			Set(float64(node.Info.Memory.MemTotalKiB))
 
 	}
