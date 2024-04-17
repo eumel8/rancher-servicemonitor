@@ -277,6 +277,7 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 func WithLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Request", r.RemoteAddr, r.Method, r.URL.Path)
+		registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 		next.ServeHTTP(w, r)
 	})
 }
