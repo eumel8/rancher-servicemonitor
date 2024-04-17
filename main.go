@@ -235,7 +235,6 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 			WithLabelValues(node.ClusterID, node.Name, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
-		fmt.Println("Node Name: ", node.Hostname, "Node Cluster ID: ", node.ClusterID, "Node Type: ", nodeType, "Node CPU Count: ", node.Info.CPU.Count)
 		rancherClusterMemoryCount.
 			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
 			Set(float64(node.Info.Memory.MemTotalKiB))
@@ -328,9 +327,18 @@ func main() {
 
 	// Metrics route
 	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	//log.Debug("Received request:", http.
 
-	//log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
+	// log the request
+	metrics := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests.",
+		},
+		[]string{"method", "path", "status"},
+	)
+	prometheus.DefaultRegisterer.MustRegister(metrics)
+
+	http.Handle("/metrics", promhttp.InstrumentHandlerCounter(metrics, promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 
 	// Start the server in a separate goroutine
 	go func() {
