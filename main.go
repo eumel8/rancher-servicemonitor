@@ -31,22 +31,22 @@ var rancherClusterCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Help: "Rancher Cluster count",
 })
 
-var rancherNodeCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherNodeCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_node_count",
 	Help: "Rancher Node count",
 })
 
-var rancherProjectCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherProjectCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_project_count",
 	Help: "Rancher Project count",
 })
 
-var rancherTokenCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherTokenCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_token_count",
 	Help: "Rancher Token count",
 })
 
-var rancherUserCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherUserCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_user_count",
 	Help: "Rancher User count",
 })
@@ -191,7 +191,7 @@ func (c *Config) getProjectCount(managementClient *managementClient.Client) erro
 		return err
 	}
 	projectCount := len(projects.Data)
-	rancherProjectCount.Add(
+	rancherProjectCount.Set(
 		float64(projectCount),
 	)
 	return nil
@@ -206,7 +206,7 @@ func (c *Config) getNodeCount(managementClient *managementClient.Client) error {
 		return err
 	}
 	nodeCount := len(nodes.Data)
-	rancherNodeCount.Add(
+	rancherNodeCount.Set(
 		float64(nodeCount),
 	)
 	return nil
@@ -233,11 +233,11 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 		log.Debug("Getting node", node.ClusterID, node.Hostname)
 		rancherClusterCpuCount.
 			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
-			Add(float64(node.Info.CPU.Count))
+			Set(float64(node.Info.CPU.Count))
 
 		rancherClusterMemoryCount.
 			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
-			Add(float64(node.Info.Memory.MemTotalKiB))
+			Set(float64(node.Info.Memory.MemTotalKiB))
 
 	}
 	return nil
@@ -252,7 +252,7 @@ func (c *Config) getTokenCount(managementClient *managementClient.Client) error 
 		return err
 	}
 	tokenCount := len(tokens.Data)
-	rancherTokenCount.Add(
+	rancherTokenCount.Set(
 		float64(tokenCount),
 	)
 	return nil
@@ -267,7 +267,7 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 		return err
 	}
 	userCount := len(users.Data)
-	rancherUserCount.Add(
+	rancherUserCount.Set(
 		float64(userCount),
 	)
 	return nil
