@@ -273,6 +273,14 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 	return nil
 }
 
+// WithLogging is a middleware that logs the request
+func WithLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Info("Request", r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	config := &Config{}
 	config.Load()
@@ -326,7 +334,7 @@ func main() {
 	})
 
 	// Metrics route
-	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	http.Handle("/metrics", WithLogging(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 
 	// Start the server in a separate goroutine
 	go func() {
