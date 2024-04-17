@@ -235,9 +235,9 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 			WithLabelValues(node.ClusterID, node.Name, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
-		fmt.Println("Node Name: ", node.Name, "Node Cluster ID: ", node.ClusterID, "Node Type: ", nodeType, "Node CPU Count: ", node.Info.CPU.Count)
+		fmt.Println("Node Name: ", node.Hostname, "Node Cluster ID: ", node.ClusterID, "Node Type: ", nodeType, "Node CPU Count: ", node.Info.CPU.Count)
 		rancherClusterMemoryCount.
-			WithLabelValues(node.ClusterID, node.Name, nodeType).
+			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
 			Set(float64(node.Info.Memory.MemTotalKiB))
 
 	}
