@@ -26,27 +26,27 @@ const (
 
 var registry = prometheus.NewRegistry()
 
-var rancherClusterCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherClusterCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_cluster_count",
 	Help: "Rancher Cluster count",
 })
 
-var rancherNodeCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherNodeCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_node_count",
 	Help: "Rancher Node count",
 })
 
-var rancherProjectCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherProjectCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_project_count",
 	Help: "Rancher Project count",
 })
 
-var rancherTokenCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherTokenCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_token_count",
 	Help: "Rancher Token count",
 })
 
-var rancherUserCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherUserCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_user_count",
 	Help: "Rancher User count",
 })
@@ -54,12 +54,12 @@ var rancherUserCount = prometheus.NewCounter(prometheus.CounterOpts{
 var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_cpu_count",
 	Help: "Rancher Cluster CPU count",
-}, []string{"cluster", "type"})
+}, []string{"cluster", "node", "type"})
 
 var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_memory_count",
 	Help: "Rancher Cluster Memory count",
-}, []string{"cluster", "type"})
+}, []string{"cluster", "nodename", "type"})
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
@@ -176,7 +176,7 @@ func (c *Config) getClusterCount(managementClient *managementClient.Client) erro
 		return err
 	}
 	clusterCount := len(clusters.Data)
-	rancherClusterCount.Add(
+	rancherClusterCount.Set(
 		float64(clusterCount),
 	)
 	return nil
@@ -191,7 +191,7 @@ func (c *Config) getProjectCount(managementClient *managementClient.Client) erro
 		return err
 	}
 	projectCount := len(projects.Data)
-	rancherProjectCount.Add(
+	rancherProjectCount.Set(
 		float64(projectCount),
 	)
 	return nil
@@ -206,7 +206,7 @@ func (c *Config) getNodeCount(managementClient *managementClient.Client) error {
 		return err
 	}
 	nodeCount := len(nodes.Data)
-	rancherNodeCount.Add(
+	rancherNodeCount.Set(
 		float64(nodeCount),
 	)
 	return nil
@@ -214,7 +214,7 @@ func (c *Config) getNodeCount(managementClient *managementClient.Client) error {
 
 // getNodeCPUCount gets the count of cpu in Rancher
 func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error {
-	log.Debug("Getting node cpu")
+	log.Debug("Getting node cpu/mem")
 
 	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
@@ -222,7 +222,6 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 	}
 
 	var nodeType string
-
 	// loop around all nodes data
 	for _, node := range nodes.Data {
 		if node.Worker {
@@ -231,12 +230,13 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 			nodeType = "master"
 		}
 
+		log.Debug("Getting node", node.ClusterID, node.Hostname)
 		rancherClusterCpuCount.
-			WithLabelValues(node.ClusterID, nodeType).
+			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
 		rancherClusterMemoryCount.
-			WithLabelValues(node.ClusterID, nodeType).
+			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
 			Set(float64(node.Info.Memory.MemTotalKiB))
 
 	}
@@ -252,7 +252,7 @@ func (c *Config) getTokenCount(managementClient *managementClient.Client) error 
 		return err
 	}
 	tokenCount := len(tokens.Data)
-	rancherTokenCount.Add(
+	rancherTokenCount.Set(
 		float64(tokenCount),
 	)
 	return nil
@@ -267,10 +267,27 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 		return err
 	}
 	userCount := len(users.Data)
-	rancherUserCount.Add(
+	rancherUserCount.Set(
 		float64(userCount),
 	)
 	return nil
+}
+
+// WithLogging is a middleware that logs the request
+func WithLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config := &Config{}
+		config.Load()
+		log.Info("Request", r.RemoteAddr, r.Method, r.URL.Path)
+		// call data
+		err := config.getData()
+		if err != nil {
+			log.Error("Failed to get the data count", err)
+			//http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func main() {
@@ -300,6 +317,7 @@ func main() {
 	log.Info("Starting Rancher Prometheus Exporter")
 
 	// Create a new Prometheus registry
+	//registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 	registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 
 	// Create a new HTTP server
@@ -311,14 +329,6 @@ func main() {
 		Addr: ":" + port,
 	}
 
-	// call data
-	err := config.getData()
-	if err != nil {
-		log.Error("Failed to get the data count", err)
-		//http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
-		return
-	}
-
 	// Define the routes
 	// Default route for probes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -326,10 +336,7 @@ func main() {
 	})
 
 	// Metrics route
-	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	//log.Debug("Received request:", http.
-
-	//log.Debug("Received request:", r.RemoteAddr, r.Method, r.RequestURI)
+	http.Handle("/metrics", WithLogging(promhttp.HandlerFor(registry, promhttp.HandlerOpts{})))
 
 	// Start the server in a separate goroutine
 	go func() {
