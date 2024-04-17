@@ -276,8 +276,16 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 // WithLogging is a middleware that logs the request
 func WithLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config := &Config{}
+		config.Load()
 		log.Info("Request", r.RemoteAddr, r.Method, r.URL.Path)
-		registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
+		// call data
+		err := config.getData()
+		if err != nil {
+			log.Error("Failed to get the data count", err)
+			//http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -310,6 +318,7 @@ func main() {
 
 	// Create a new Prometheus registry
 	//registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
+	registry.MustRegister(rancherClusterCount, rancherClusterCpuCount, rancherClusterMemoryCount, rancherNodeCount, rancherProjectCount, rancherTokenCount, rancherUserCount)
 
 	// Create a new HTTP server
 	port := config.Port
@@ -318,14 +327,6 @@ func main() {
 	}
 	server := &http.Server{
 		Addr: ":" + port,
-	}
-
-	// call data
-	err := config.getData()
-	if err != nil {
-		log.Error("Failed to get the data count", err)
-		//http.Error(w, "Failed to get the data count", http.StatusInternalServerError)
-		return
 	}
 
 	// Define the routes
