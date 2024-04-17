@@ -59,7 +59,7 @@ var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_memory_count",
 	Help: "Rancher Cluster Memory count",
-}, []string{"cluster", "node", "type"})
+}, []string{"cluster", "nodename", "type"})
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
@@ -276,7 +276,7 @@ func (c *Config) getUserCount(managementClient *managementClient.Client) error {
 // WithLogging is a middleware that logs the request
 func WithLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Info("Request", r.URL.Path)
+		log.Info("Request", r.RemoteAddr, r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
