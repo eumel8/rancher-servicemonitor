@@ -54,12 +54,12 @@ var rancherUserCount = prometheus.NewCounter(prometheus.CounterOpts{
 var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_cpu_count",
 	Help: "Rancher Cluster CPU count",
-}, []string{"cluster", "type"})
+}, []string{"cluster", "node", "type"})
 
 var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_memory_count",
 	Help: "Rancher Cluster Memory count",
-}, []string{"cluster", "type"})
+}, []string{"cluster", "node", "type"})
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
