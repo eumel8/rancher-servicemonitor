@@ -26,7 +26,7 @@ const (
 
 var registry = prometheus.NewRegistry()
 
-var rancherClusterCount = prometheus.NewCounter(prometheus.CounterOpts{
+var rancherClusterCount = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "rancher_cluster_count",
 	Help: "Rancher Cluster count",
 })
@@ -176,7 +176,7 @@ func (c *Config) getClusterCount(managementClient *managementClient.Client) erro
 		return err
 	}
 	clusterCount := len(clusters.Data)
-	rancherClusterCount.Add(
+	rancherClusterCount.Set(
 		float64(clusterCount),
 	)
 	return nil
@@ -214,7 +214,7 @@ func (c *Config) getNodeCount(managementClient *managementClient.Client) error {
 
 // getNodeCPUCount gets the count of cpu in Rancher
 func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error {
-	log.Debug("Getting node cpu")
+	log.Debug("Getting node cpu/mem")
 
 	nodes, err := managementClient.Node.ListAll(clientbase.NewListOpts())
 	if err != nil {
@@ -222,7 +222,6 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 	}
 
 	var nodeType string
-
 	// loop around all nodes data
 	for _, node := range nodes.Data {
 		if node.Worker {
@@ -231,13 +230,14 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 			nodeType = "master"
 		}
 
+		log.Debug("Getting node", node.ClusterID, node.Hostname)
 		rancherClusterCpuCount.
-			WithLabelValues(node.ClusterID, node.Name, nodeType).
-			Set(float64(node.Info.CPU.Count))
+			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
+			Add(float64(node.Info.CPU.Count))
 
 		rancherClusterMemoryCount.
 			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
-			Set(float64(node.Info.Memory.MemTotalKiB))
+			Add(float64(node.Info.Memory.MemTotalKiB))
 
 	}
 	return nil
