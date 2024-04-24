@@ -22,3 +22,10 @@ $ kubectl create secret generic ranchertoken --from-literal RANCHER_TOKEN=token-
 ```bash
 $ helm upgrade -i rancher-servicemonitor ./chart
 ```
+
+## dev testing
+
+```bash
+go test -coverprofile=c.out ./...
+go tool cover -html=c.out 
+````
