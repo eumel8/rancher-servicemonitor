@@ -29,3 +29,7 @@ $ helm upgrade -i rancher-servicemonitor ./chart
 go test -coverprofile=c.out ./...
 go tool cover -html=c.out 
 ````
+
+ref:
+
+- https://github.com/rancher/cluster-api/blob/bc756c4e7ed08313413c1300859bd4dceeccb25a/docs/book/src/developer/testing.md
