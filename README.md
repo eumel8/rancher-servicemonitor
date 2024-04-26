@@ -33,3 +33,4 @@ go tool cover -html=c.out
 ref:
 - https://github.com/stretchr/testify?tab=readme-ov-file#suite-package
 - https://github.com/rancher/rancher/blob/9c4b89a0a2e11d6037bd0760d80560abf3e65d53/tests/v2/integration/projects/project_user_test.go
+- https://github.com/rancher/cluster-api/blob/bc756c4e7ed08313413c1300859bd4dceeccb25a/docs/book/src/developer/testing.md
