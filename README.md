@@ -28,4 +28,8 @@ $ helm upgrade -i rancher-servicemonitor ./chart
 ```bash
 go test -coverprofile=c.out ./...
 go tool cover -html=c.out 
-````
+```
+
+ref:
+- https://github.com/stretchr/testify?tab=readme-ov-file#suite-package
+- https://github.com/rancher/rancher/blob/9c4b89a0a2e11d6037bd0760d80560abf3e65d53/tests/v2/integration/projects/project_user_test.go
