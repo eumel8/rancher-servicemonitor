@@ -59,7 +59,7 @@ var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_memory_count",
 	Help: "Rancher Cluster Memory count",
-}, []string{"cluster", "nodename", "type"})
+}, []string{"cluster", "clustername", "nodename", "type"})
 
 // Client are the client kind for a Rancher v3 API
 type Client struct {
@@ -231,12 +231,17 @@ func (c *Config) getNodeMetrics(managementClient *managementClient.Client) error
 		}
 
 		log.Debug("Getting node", node.ClusterID, node.Hostname)
+		cluster, err := managementClient.Cluster.ByID(node.ClusterID)
+		if err != nil {
+			return err
+		}
+
 		rancherClusterCpuCount.
-			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
+			WithLabelValues(node.ClusterID, cluster.Name, node.Hostname, nodeType).
 			Set(float64(node.Info.CPU.Count))
 
 		rancherClusterMemoryCount.
-			WithLabelValues(node.ClusterID, node.Hostname, nodeType).
+			WithLabelValues(node.ClusterID, cluster.Name, node.Hostname, nodeType).
 			Set(float64(node.Info.Memory.MemTotalKiB))
 
 	}
