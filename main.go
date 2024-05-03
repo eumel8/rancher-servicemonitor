@@ -54,7 +54,7 @@ var rancherUserCount = prometheus.NewGauge(prometheus.GaugeOpts{
 var rancherClusterCpuCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_cpu_count",
 	Help: "Rancher Cluster CPU count",
-}, []string{"cluster", "node", "type"})
+}, []string{"cluster", "clustername", "node", "type"})
 
 var rancherClusterMemoryCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "rancher_cluster_memory_count",
